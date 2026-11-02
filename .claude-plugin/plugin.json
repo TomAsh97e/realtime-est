@@ -1,7 +1,7 @@
 {
   "name": "realtime-est",
   "displayName": "Realtime Est: calibrated AI time estimates",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Realistic time estimates for AI-agent work, calibrated on your own Claude Code history instead of human-scale intuition.",
   "author": {
     "name": "TomAsh97e",
@@ -16,5 +16,9 @@
     "calibration",
     "planning",
     "productivity"
-  ]
+  ],
+  "documentationUrl": "https://github.com/TomAsh97e/realtime-est#readme",
+  "supportUrl": "https://github.com/TomAsh97e/realtime-est/issues",
+  "privacyPolicyUrl": "https://github.com/TomAsh97e/realtime-est/blob/main/PRIVACY.md",
+  "termsOfServiceUrl": "https://github.com/TomAsh97e/realtime-est/blob/main/LICENSE"
 }
