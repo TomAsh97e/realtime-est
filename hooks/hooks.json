@@ -1,0 +1,16 @@
+{
+  "description": "Record each finished turn (duration, tool calls, files edited) for time-estimate calibration. Local only.",
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/skills/realtime-est/scripts/rte.py\" hook",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}

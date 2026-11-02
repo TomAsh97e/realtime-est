@@ -1,0 +1,14 @@
+{
+  "name": "realtime-est",
+  "owner": {
+    "name": "TomAsh97e",
+    "url": "https://github.com/TomAsh97e"
+  },
+  "plugins": [
+    {
+      "name": "realtime-est",
+      "source": "./",
+      "description": "Realistic time estimates for AI-agent work, calibrated on your own Claude Code history instead of human-scale intuition."
+    }
+  ]
+}
