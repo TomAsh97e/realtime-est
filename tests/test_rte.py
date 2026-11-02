@@ -161,6 +161,26 @@ class Matching(unittest.TestCase):
         act = rte.match_actual({"ts": rte.iso(T0 + 150), "session": "s1", "scope": "next"}, self.turns)
         self.assertEqual(act["key"], "s1:b")
 
+    def test_task_scope_spans_turns_and_sessions(self):
+        other = dict(self.turns[1], key="s2:c", session="s2", start=rte.iso(T0 + 400))
+        turns = self.turns + [other]
+        est = {"ts": rte.iso(T0 + 30), "session": "s1", "cwd": "/p/sub", "scope": "task"}
+        self.assertIsNone(rte.match_actual(est, turns))  # still open
+        est["done_ts"] = rte.iso(T0 + 1000)
+        act = rte.match_actual(est, turns)
+        self.assertEqual(act["turns"], 3)
+        self.assertEqual(act["active_s"], 50 + 60 + 60)
+        self.assertEqual(act["actions"], 3 + 2 + 2)
+
+    def test_log_and_done_roundtrip(self):
+        os.environ.pop("CLAUDE_CODE_SESSION_ID", None)
+        with redirect_stdout(io.StringIO()):
+            rte.main(["log-estimate", "--p50", "60", "--p80", "120", "--scope", "task", "--desc", "x"])
+            rc = rte.main(["done", "--no-backfill"])
+        self.assertEqual(rc, 0)
+        [est] = [e for e in rte.load_estimates() if e.get("desc") == "x"]
+        self.assertIn("done_ts", est)
+
 
 class Hook(unittest.TestCase):
     def test_hook_records_last_turn_and_is_silent(self):

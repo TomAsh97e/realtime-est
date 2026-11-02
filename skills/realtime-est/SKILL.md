@@ -59,9 +59,14 @@ Python 3.8+ only, no dependencies. Every command imports new transcript data aut
 9. **Log it** so accuracy can be scored later. `estimate` prints a ready-made `log-estimate`
    command whose P50/P80 are already filled in; copy it as is. Fill in `--naive` (your gut
    estimate from step 3, in seconds) and `--desc`, then pick the scope:
-   - `--scope next` if the user only asked a question ("how long would X take?"). The work
-     starts with their next prompt.
-   - `--scope current` only if you are about to do the work yourself in this same turn.
+   - `--scope current` if you are about to do the whole job yourself, right now, in this turn.
+   - `--scope task` for everything else: multi-turn work, or the user only asked a question
+     ("how long would X take?"). The estimate stays open until the work is done.
+10. **Close tasks.** When a task logged with `--scope task` is finished, for example the last
+    milestone is done or the user says it is complete, run
+    `python3 ${CLAUDE_SKILL_DIR}/scripts/rte.py done`. It scores the estimate against every
+    turn in this project since it was logged, across sessions. Mention the result to the
+    user in one line.
 
 ## Reporting format
 

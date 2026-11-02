@@ -15,6 +15,7 @@ Subcommands:
   similar TEXT  Past turns most similar to a task description
   estimate      Calibrated time range for N agent actions (+ compute, + human checkpoints)
   log-estimate  Record an estimate so it can be scored later
+  done          Close a multi-turn task estimate and score it
   accuracy      Compare logged estimates with what actually happened
 """
 from __future__ import annotations
@@ -425,11 +426,22 @@ def review_gaps(turns):
     return gaps
 
 
+def load_estimates():
+    """Estimates in log order, with `done_ts` attached to closed multi-turn tasks."""
+    ests, done = [], {}
+    for r in read_jsonl(ESTIMATES_FILE):
+        if r.get("done_for"):
+            done[r["done_for"]] = r["ts"]
+        else:
+            ests.append(r)
+    for e in ests:
+        if e.get("id") in done:
+            e["done_ts"] = done[e["id"]]
+    return ests
+
+
 def estimates_with_actuals(turns):
-    out = []
-    for est in read_jsonl(ESTIMATES_FILE):
-        out.append((est, match_actual(est, turns)))
-    return out
+    return [(est, match_actual(est, turns)) for est in load_estimates()]
 
 
 def action_bias(turns):
@@ -473,6 +485,12 @@ def match_actual(est, turns):
     if t is None:
         return None
     sess = est.get("session")
+    if est.get("scope") == "task":
+        t1 = parse_ts(est.get("done_ts"))
+        if t1 is None:
+            return None  # still open
+        cands = [r for r in turns if _same_place(est, r)]
+        return window_actual(cands, t, t1)
     cands = [r for r in turns if (sess and r.get("session") == sess) or (not sess and r.get("project") == est.get("cwd"))]
     if est.get("scope") == "current":
         for r in cands:
@@ -488,6 +506,30 @@ def match_actual(est, turns):
         return None
     r = min(nxt, key=lambda r: r["start"])
     return {"key": r["key"], "active_s": r["active_s"], "actions": r["actions"], "wall_s": r["wall_s"]}
+
+
+def _same_place(est, r):
+    """A multi-turn task may span sessions: match by session or by project directory."""
+    if est.get("session") and r.get("session") == est.get("session"):
+        return True
+    proj, cwd = r.get("project"), est.get("cwd")
+    return bool(proj and cwd and (cwd == proj or cwd.startswith(proj.rstrip(os.sep) + os.sep)))
+
+
+def window_actual(turns, t0, t1):
+    """Agent-active time and actions of all turns inside the window [t0, t1]."""
+    active, acts, keys = 0.0, 0, []
+    for r in turns:
+        s = parse_ts(r["start"])
+        if s > t1 or s + r["wall_s"] < t0:
+            continue
+        part = sum(max(0.0, min(s + e, t1) - max(s + a, t0)) for a, e in r.get("segs", []))
+        n = sum(1 for o in r.get("act", []) if t0 <= s + o <= t1)
+        if part > 0 or n:
+            active += part
+            acts += n
+            keys.append(r["key"])
+    return {"key": ",".join(keys), "turns": len(keys), "active_s": active, "actions": acts, "wall_s": t1 - t0}
 
 
 # ------------------------------------------------------------------- similarity
@@ -666,13 +708,14 @@ def cmd_estimate(args):
     w = res["work"]
     print("\nLog it (scored against agent work + compute, i.e. without your review time):")
     print(f"  python3 {Path(__file__).resolve()} log-estimate --p50 {w[50]:.0f} --p80 {w[80]:.0f} "
-          f"--actions {actions[0]:g}-{actions[1]:g} --naive <gut-feel seconds> --scope <current|next> --desc \"<task>\"")
+          f"--actions {actions[0]:g}-{actions[1]:g} --naive <gut-feel seconds> --scope <current|next|task> --desc \"<task>\"")
     return 0
 
 
 def cmd_log_estimate(args):
     actions = parse_range(args.actions) if args.actions else None
     rec = {
+        "id": f"{int(time.time()) % 10 ** 6:06d}{random.randrange(100):02d}",
         "ts": iso(time.time()),
         "session": os.environ.get("CLAUDE_CODE_SESSION_ID"),
         "cwd": os.getcwd(),
@@ -685,7 +728,38 @@ def cmd_log_estimate(args):
         "naive_s": args.naive,
     }
     append_jsonl(ESTIMATES_FILE, rec)
-    print(f"logged estimate ({args.scope} turn): P50 {fmt_dur(args.p50)}, P80 {fmt_dur(args.p80)}")
+    what = {"current": "rest of this turn", "next": "next turn", "task": "multi-turn task"}[args.scope]
+    print(f"logged estimate {rec['id']} ({what}): P50 {fmt_dur(args.p50)}, P80 {fmt_dur(args.p80)}")
+    if args.scope == "task":
+        print(f"When the task is finished run: python3 {Path(__file__).resolve()} done")
+    return 0
+
+
+def cmd_done(args):
+    """Close a multi-turn task estimate (default: the latest open one for this session/project)."""
+    _ensure_data(args)
+    here = {"session": os.environ.get("CLAUDE_CODE_SESSION_ID"), "cwd": os.getcwd()}
+    open_tasks = [e for e in load_estimates() if e.get("scope") == "task" and not e.get("done_ts")]
+    if args.id:
+        open_tasks = [e for e in open_tasks if e.get("id") == args.id]
+    else:
+        open_tasks = [e for e in open_tasks
+                      if _same_place(here, {"session": e.get("session"), "project": e.get("cwd")})
+                      or _same_place(e, {"session": here["session"], "project": here["cwd"]})] or open_tasks
+    if not open_tasks:
+        print("No open task estimate found.")
+        return 1
+    est = open_tasks[-1]
+    now = iso(time.time())
+    append_jsonl(ESTIMATES_FILE, {"done_for": est["id"], "ts": now})
+    est["done_ts"] = now
+    act = match_actual(est, load_turns())
+    print(f"closed {est['id']}: {est.get('desc') or ''}")
+    if act:
+        ratio = act["active_s"] / est["p50_s"] if est.get("p50_s") else None
+        print(f"  estimate P50 {fmt_dur(est.get('p50_s'))} / P80 {fmt_dur(est.get('p80_s'))}; actual agent+compute "
+              f"{fmt_dur(act['active_s'])} over {act['turns']} turn(s), {act['actions']} actions, "
+              f"{fmt_dur(act['wall_s'])} wall-clock" + (f"; actual/P50 = {ratio:.2f}" if ratio else ""))
     return 0
 
 
@@ -701,6 +775,10 @@ def cmd_accuracy(args):
     ratios, cover, naive_ratios = [], [], []
     for est, act in pairs[-args.last:]:
         a = act["active_s"] if act else None
+        if act is None and est.get("scope") == "task":
+            print(f"{est['ts'][:16]:>16} {'task':>7} {fmt_dur(est.get('p50_s')):>7} {fmt_dur(est.get('p80_s')):>7} "
+                  f"{'open':>7}  (close with `done`)  {(est.get('desc') or '')[:50]}")
+            continue
         ratio = a / est["p50_s"] if (a is not None and est.get("p50_s")) else None
         if ratio is not None:
             ratios.append(ratio)
@@ -757,10 +835,16 @@ def main(argv=None):
     sp.add_argument("--p80", type=float, required=True, help="seconds")
     sp.add_argument("--actions", help="estimated actions range, e.g. 20-40")
     sp.add_argument("--naive", type=float, help="the uncalibrated (human-scale) guess, seconds")
-    sp.add_argument("--scope", choices=["current", "next"], default="current",
-                    help="current: the work continues in this turn; next: user will start it in the next prompt")
+    sp.add_argument("--scope", choices=["current", "next", "task"], default="current",
+                    help="current: the work continues in this turn; next: user will start it in the next prompt; "
+                         "task: spans several turns/sessions until closed with `done`")
     sp.add_argument("--desc", default="")
     sp.set_defaults(fn=cmd_log_estimate)
+
+    sp = sub.add_parser("done", help="close a multi-turn task estimate and score it")
+    sp.add_argument("--id", help="estimate id (default: latest open task here)")
+    sp.add_argument("--no-backfill", action="store_true")
+    sp.set_defaults(fn=cmd_done)
 
     sp = sub.add_parser("accuracy", help="score logged estimates against reality")
     sp.add_argument("--last", type=int, default=20)

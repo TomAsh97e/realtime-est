@@ -5,6 +5,11 @@
 A Claude Code plugin (skill + hook) that stops your agent from quoting human timelines
 ("this will take 2-3 days") for work it finishes in 15 minutes.
 
+![realtime-est demo: uncalibrated "2-3 days" vs calibrated 16 min P50](docs/demo.svg)
+
+<sub>The "without" answer illustrates the typical failure mode; the "with" numbers come from a real
+`estimate` run on the author's history.</sub>
+
 ## The problem
 
 LLMs learned how long things take from human-written text. When an agent estimates a task,
@@ -33,7 +38,8 @@ effort setting, machine, codebase and how you work.
    P10/P50/P80/P90.
 4. **Three clocks, reported separately:** agent work, compute/waits, and your time.
 5. **Close the loop.** Estimates are logged and later scored against what actually happened
-   (`accuracy`). Once there are at least 5 scored estimates, a systematic over- or
+   (`accuracy`). A multi-turn task (`--scope task`) stays open until `done`. It is then
+   scored against every turn in the project since the estimate, across sessions. Once there are at least 5 scored estimates, a systematic over- or
    under-counting of actions is corrected automatically.
 
 Example output (from the author's history: 44 tool-using turns, Opus 5.5):
@@ -132,7 +138,8 @@ The script lives at `skills/realtime-est/scripts/rte.py` (plugin) or
 | `rte.py profile [--project DIR] [--json]` | Your calibration: time by task size, seconds per action, review time |
 | `rte.py similar "task description"` | Past turns most similar to a task, with their real action counts and durations |
 | `rte.py estimate --actions 20-40 [--compute-min 5-10] [--checkpoints 2] [--json]` | Calibrated P10/P50/P80/P90 |
-| `rte.py log-estimate --p50 S --p80 S --actions LO-HI --naive S --scope current\|next --desc "..."` | Record an estimate for later scoring |
+| `rte.py log-estimate --p50 S --p80 S --actions LO-HI --naive S --scope current\|task --desc "..."` | Record an estimate. `current` covers the rest of this turn; `task` covers multi-turn work until `done` |
+| `rte.py done [--id ID]` | Close the latest open task estimate here and score it immediately |
 | `rte.py accuracy` | Logged estimates vs reality, P80 coverage, and how far off the naive guesses were |
 | `rte.py backfill` | Import transcripts (every other command runs this automatically) |
 | `rte.py hook` | The `Stop` hook entry point (reads hook JSON on stdin; never prints, never fails) |

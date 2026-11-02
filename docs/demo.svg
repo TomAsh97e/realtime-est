@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="406" viewBox="0 0 880 406">
+<rect width="880" height="406" rx="12" fill="#0d1117"/>
+<rect width="880" height="36" rx="12" fill="#161b22"/><rect y="24" width="880" height="12" fill="#161b22"/>
+<circle cx="22" cy="18" r="6" fill="#f85149"/><circle cx="42" cy="18" r="6" fill="#d29922"/><circle cx="62" cy="18" r="6" fill="#3fb950"/>
+<text x="440.0" y="23" fill="#8b949e" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="13" text-anchor="middle">claude — realtime-est</text>
+<line x1="20" x2="860" y1="184" y2="184" stroke="#30363d"/>
+<text x="24" y="78" fill="#79c0ff" font-weight="bold" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="15" xml:space="preserve">&gt; How long will it take to add OAuth login to this app?</text>
+<text x="24" y="118" fill="#8b949e" font-weight="bold" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="15" xml:space="preserve">WITHOUT realtime-est  (typical uncalibrated agent answer)</text>
+<text x="24" y="146" fill="#f85149" font-weight="normal" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="15" xml:space="preserve">  Estimated effort: 2-3 days</text>
+<text x="24" y="170" fill="#8b949e" font-weight="42" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="15" xml:space="preserve">    Day 1: provider setup and backend flow · Day 2: frontend + sessions · Day 3: tests</text>
+<text x="24" y="212" fill="#8b949e" font-weight="bold" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="15" xml:space="preserve">WITH realtime-est  (calibrated on your own Claude Code history, ~30-60 agent actions)</text>
+<text x="24" y="242" fill="#8b949e" font-weight="normal" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="15" xml:space="preserve">                     P50       P80</text>
+<text x="24" y="266" fill="#e6edf3" font-weight="normal" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="15" xml:space="preserve">  agent work        10 min    17 min</text>
+<text x="24" y="290" fill="#e6edf3" font-weight="normal" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="15" xml:space="preserve">  build + tests      2 min     3 min</text>
+<text x="24" y="314" fill="#e6edf3" font-weight="normal" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="15" xml:space="preserve">  your review        3 min     6 min   (1 checkpoint)</text>
+<text x="24" y="338" fill="#3fb950" font-weight="bold" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="15" xml:space="preserve">  total             16 min    25 min</text>
+<text x="24" y="374" fill="#8b949e" font-weight="normal" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="15" xml:space="preserve">  logged → scored later with `rte.py accuracy`</text>
+</svg>

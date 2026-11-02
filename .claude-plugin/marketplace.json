@@ -1,5 +1,6 @@
 {
   "name": "realtime-est",
+  "description": "Calibrated time estimates for AI-agent work in Claude Code.",
   "owner": {
     "name": "TomAsh97e",
     "url": "https://github.com/TomAsh97e"
