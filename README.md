@@ -93,20 +93,35 @@ Inside Claude Code:
 Restart Claude Code. The skill `realtime-est` and the `Stop` hook are now active in every
 project.
 
-### Option B: manual install
+### Option B: manual install (without the plugin system)
 
-```bash
-git clone https://github.com/TomAsh97e/realtime-est.git
-cd realtime-est
-./install.sh
-```
+1. Download this repository and copy the `skills/realtime-est` folder to
+   `~/.claude/skills/realtime-est`.
+2. Add the `Stop` hook to `~/.claude/settings.json`, merging it with any hooks you already
+   have:
 
-This copies the skill to `~/.claude/skills/realtime-est` and adds the hook to
-`~/.claude/settings.json`. A backup is saved as `settings.json.bak-realtime-est`. It also
-imports your history and prints your profile.
+   ```json
+   {
+     "hooks": {
+       "Stop": [
+         {
+           "hooks": [
+             {
+               "type": "command",
+               "command": "python3 ~/.claude/skills/realtime-est/scripts/rte.py hook",
+               "timeout": 15
+             }
+           ]
+         }
+       ]
+     }
+   }
+   ```
+3. Restart Claude Code. Your history is imported automatically the first time the skill runs.
 
-To remove: `./install.sh --uninstall`. Your recorded data in `~/.claude/realtime-est/` is
-kept.
+The repository also includes `install.sh`, which automates these steps (it backs up
+`settings.json` and has an `--uninstall` option). Read it before you run it. Uninstalling
+keeps your recorded data in `~/.claude/realtime-est/`.
 
 ### Optional: make it automatic
 
