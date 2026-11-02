@@ -1,5 +1,6 @@
 {
   "name": "realtime-est",
+  "displayName": "Realtime Est: calibrated AI time estimates",
   "version": "0.2.0",
   "description": "Realistic time estimates for AI-agent work, calibrated on your own Claude Code history instead of human-scale intuition.",
   "author": {
@@ -9,5 +10,11 @@
   "homepage": "https://github.com/TomAsh97e/realtime-est",
   "repository": "https://github.com/TomAsh97e/realtime-est",
   "license": "MIT",
-  "keywords": ["estimation", "time", "calibration", "planning", "productivity"]
+  "keywords": [
+    "estimation",
+    "time",
+    "calibration",
+    "planning",
+    "productivity"
+  ]
 }

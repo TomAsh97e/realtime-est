@@ -156,6 +156,15 @@ The script lives at `skills/realtime-est/scripts/rte.py` (plugin) or
 
 ## Data and privacy
 
+**What this plugin runs, sends and fetches**
+
+- **Runs:** one local Python script (`skills/realtime-est/scripts/rte.py`, standard library
+  only). It runs as a `Stop` hook after each turn, and when the skill calls it. It only reads
+  Claude Code transcripts in `~/.claude/projects` and writes to `~/.claude/realtime-est/`.
+- **Sends:** nothing. There are no network calls, no telemetry and no external services.
+- **Fetches:** nothing. There are no downloads and no package installs at runtime.
+
+
 Everything stays on your machine, in `~/.claude/realtime-est/`:
 
 - `turns.jsonl`: one record per turn, with timings, tool counts, model, project path, and
