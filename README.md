@@ -5,7 +5,7 @@
 A Claude Code plugin (skill + hook) that stops your agent from quoting human timelines
 ("this will take 2-3 days") for work it finishes in 15 minutes.
 
-![realtime-est demo: uncalibrated "2-3 days" vs calibrated 16 min P50](docs/demo.svg)
+![realtime-est demo: uncalibrated "2-3 days" vs calibrated 16 min P50](docs/demo.png)
 
 <sub>The "without" answer illustrates the typical failure mode; the "with" numbers come from a real
 `estimate` run on the author's history.</sub>
